@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720">
+  <rect width="1200" height="720" fill="#f8fafc"/>
+  <rect x="40" y="40" width="1120" height="640" rx="12" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="80" y="120" font-family="Arial" font-size="44" font-weight="700" fill="#0f172a">Analytics Placeholder</text>
+  <polyline points="110,540 260,410 410,450 560,300 710,330 860,210 1010,240" fill="none" stroke="#2563eb" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="120" y="180" width="220" height="80" rx="8" fill="#dbeafe"/>
+  <rect x="380" y="180" width="220" height="80" rx="8" fill="#dcfce7"/>
+  <rect x="640" y="180" width="220" height="80" rx="8" fill="#fef3c7"/>
+</svg>

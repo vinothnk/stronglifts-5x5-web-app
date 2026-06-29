@@ -1,0 +1,15 @@
+services:
+  stronglifts:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "file:/app/prisma/dev.db"
+      AUTH_SECRET: "replace-with-a-long-random-secret"
+      NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+    volumes:
+      - stronglifts-data:/app/prisma
+
+volumes:
+  stronglifts-data:
+

@@ -1,0 +1,240 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String              @id @default(cuid())
+  email             String              @unique
+  passwordHash      String
+  createdAt         DateTime            @default(now())
+  settings          UserSettings?
+  workouts          Workout[]
+  bodyWeightEntries BodyWeightEntry[]
+  personalRecords   PersonalRecord[]
+  dailyNotes        DailyNote[]
+  workingWeights    WorkingWeight[]
+  assistanceExercises AssistanceExercise[]
+  assistanceTemplates AssistanceTemplate[]
+  plateInventory    PlateInventory[]
+}
+
+model UserSettings {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  units              Unit     @default(METRIC)
+  squatIncrement     Float    @default(2.5)
+  benchIncrement     Float    @default(2.5)
+  rowIncrement       Float    @default(2.5)
+  pressIncrement     Float    @default(2.5)
+  deadliftIncrement  Float    @default(5)
+  deloadPercent      Float    @default(10)
+  restSeconds        Int      @default(90)
+  deadliftRestSeconds Int     @default(180)
+  darkMode           Boolean  @default(false)
+  barWeight          Float    @default(20)
+  startingSquat      Float    @default(20)
+  startingBench      Float    @default(20)
+  startingRow        Float    @default(30)
+  startingPress      Float    @default(20)
+  startingDeadlift   Float    @default(40)
+  onboardingComplete Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Exercise {
+  id                 String              @id @default(cuid())
+  name               String              @unique
+  slug               String              @unique
+  defaultSets        Int
+  defaultReps        Int
+  defaultIncrementKg Float
+  workoutExercises   WorkoutExercise[]
+  personalRecords    PersonalRecord[]
+  workingWeights     WorkingWeight[]
+}
+
+model Workout {
+  id        String            @id @default(cuid())
+  userId    String
+  workoutType WorkoutType
+  status    WorkoutStatus     @default(DRAFT)
+  workoutDate DateTime         @default(now())
+  notes     String?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exercises WorkoutExercise[]
+  assistanceExercises WorkoutAssistanceExercise[]
+
+  @@index([userId, workoutDate])
+}
+
+model WorkoutExercise {
+  id             String   @id @default(cuid())
+  workoutId      String
+  exerciseId     String
+  targetWeight   Float
+  actualWeight   Float
+  targetSets     Int
+  targetReps     Int
+  completed      Boolean  @default(false)
+  failureCount   Int      @default(0)
+  notes          String?
+  workout        Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  exercise       Exercise @relation(fields: [exerciseId], references: [id])
+  sets           Set[]
+  warmupSets     WarmupSet[]
+}
+
+model Set {
+  id                String          @id @default(cuid())
+  workoutExerciseId String
+  setNumber         Int
+  repsCompleted     Int
+  weightUsed         Float
+  workoutExercise   WorkoutExercise @relation(fields: [workoutExerciseId], references: [id], onDelete: Cascade)
+}
+
+model WarmupSet {
+  id                String          @id @default(cuid())
+  workoutExerciseId String
+  setNumber         Int
+  reps              Int
+  weight            Float
+  completed         Boolean         @default(false)
+  workoutExercise   WorkoutExercise @relation(fields: [workoutExerciseId], references: [id], onDelete: Cascade)
+}
+
+model WorkingWeight {
+  id              String   @id @default(cuid())
+  userId          String
+  exerciseId      String
+  currentWeight   Float
+  nextWeight      Float
+  failureCount    Int      @default(0)
+  successStreak   Int      @default(0)
+  lastCompletedAt DateTime?
+  lastStatus      String?
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exercise        Exercise @relation(fields: [exerciseId], references: [id])
+
+  @@unique([userId, exerciseId])
+}
+
+model AssistanceExercise {
+  id          String   @id @default(cuid())
+  userId      String?
+  name        String
+  slug        String   @unique
+  category    String
+  custom      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workoutEntries WorkoutAssistanceExercise[]
+  templateItems AssistanceTemplateItem[]
+}
+
+model WorkoutAssistanceExercise {
+  id                   String   @id @default(cuid())
+  workoutId            String
+  assistanceExerciseId String?
+  name                 String
+  category             String
+  weight               Float?
+  sets                 Int
+  reps                 Int
+  notes                String?
+  completed            Boolean  @default(false)
+  workout              Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  assistanceExercise   AssistanceExercise? @relation(fields: [assistanceExerciseId], references: [id])
+}
+
+model AssistanceTemplate {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     AssistanceTemplateItem[]
+}
+
+model AssistanceTemplateItem {
+  id                   String   @id @default(cuid())
+  templateId           String
+  assistanceExerciseId String
+  sets                 Int      @default(3)
+  reps                 Int      @default(10)
+  weight               Float?
+  notes                String?
+  template             AssistanceTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  assistanceExercise   AssistanceExercise @relation(fields: [assistanceExerciseId], references: [id])
+}
+
+model PlateInventory {
+  id        String   @id @default(cuid())
+  userId    String
+  weight    Float
+  count     Int
+  unit      Unit     @default(METRIC)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, weight, unit])
+}
+
+model BodyWeightEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  weight    Float
+  date      DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+}
+
+model PersonalRecord {
+  id         String   @id @default(cuid())
+  userId     String
+  exerciseId String
+  weight     Float
+  reps       Int
+  estimatedOneRepMax Float
+  date       DateTime
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exercise   Exercise @relation(fields: [exerciseId], references: [id])
+
+  @@index([userId, exerciseId, date])
+}
+
+model DailyNote {
+  id        String   @id @default(cuid())
+  userId    String
+  date      DateTime
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum WorkoutType {
+  A
+  B
+}
+
+enum WorkoutStatus {
+  DRAFT
+  COMPLETED
+}
+
+enum Unit {
+  METRIC
+  IMPERIAL
+}
